@@ -10,7 +10,7 @@ app = Flask(__name__)
 @app.route('/hello/<answer>')
 def hello(answer):
     return '%s' % answer
-
+'''
 @app.route('/result/', methods=['POST', 'GET'])
 @app.route('/')
 def result():
@@ -36,6 +36,6 @@ def result():
     else:
         print('!post')
         return render_template('result.html')
-
+'''
 if __name__ == '__main__':
     app.run(debug=True)

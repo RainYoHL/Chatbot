@@ -51,15 +51,10 @@ def generate(max_len=10, size=1000, same_len=False, seed=0):
 
 def test():
     x_data, y_data, ws_input, ws_target = generate()
-    print(len(x_data))
-    assert len(x_data) == 1000
-    print(len(y_data))
-    assert len(y_data) == 1000
-    print(np.max([len(x) for x in x_data]))
-    assert np.max([len(x) for x in x_data]) == 10
-    print(len(ws_input))
-    assert len(ws_input) == 14
-    print(len(ws_target))
+    # print(x_data)
+    # print(y_data)
+    print(ws_input.dict)
+    print(ws_target.dict)
 
 if __name__ == '__main__':
     test()

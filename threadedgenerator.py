@@ -53,7 +53,8 @@ class ThreadedGenerator(object):
             self._thread.start()
         value = self._queue.get(timeout=30)
         if value == self._sentinel:
-            raise StopIteration()
+            return
+            # raise StopIteration()
         return value
 
 def test():
@@ -63,12 +64,12 @@ def test():
         while True:
             yield i
             i += 1
-
     t = gene()
     test = ThreadedGenerator(t)
-
-    for _ in range(10):
-        print(next(test))
+    test._started = True
+    test._run()
+    # for _ in range(10):
+    #     print(next(test))
 
     test.close()
 

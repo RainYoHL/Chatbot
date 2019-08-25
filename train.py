@@ -10,8 +10,8 @@ def test(params):
     from data_utils import batch_flow_bucket as batch_flow
     from threadedgenerator import ThreadedGenerator
 
-    x_data, y_data = pickle.load(open('E:\VSCode\Code\Python\Chatbot\Chatbot_1\Chatbot_2\chatbot.pkl', 'rb'))
-    ws = pickle.load(open('E:\VSCode\Code\Python\Chatbot\Chatbot_1\Chatbot_2\ws.pkl', 'rb'))
+    x_data, y_data = pickle.load(open('data170.pkl', 'rb'))
+    ws = pickle.load(open('ws170.pkl', 'rb'))
 
     #训练
     """
@@ -22,8 +22,8 @@ def test(params):
     5.办公室电脑用P5000的GPU训练40轮，训练了大概3天，训练2轮，大概一个半小时，
         如果使用CPU来训练的话，速度会特别特别的慢，可能一轮就要几个小时
     """
-    n_epoch = 400
-    batch_size = 4
+    n_epoch = 800
+    batch_size = 1
 
     steps = int(len(x_data) / batch_size) + 1
 
@@ -32,7 +32,7 @@ def test(params):
         log_device_placement=False
     )
 
-    save_path = './model/epoch_400_learn_rate_0.001_depth_4_hidden_units_128/s2ss_chatbot.ckpt'
+    save_path = './model/epoch_800_learn_rate_0.001_depth_4_hidden_units_128_data170/s2ss_chatbot.ckpt'
 
     tf.reset_default_graph()
     with tf.Graph().as_default():
@@ -74,7 +74,6 @@ def test(params):
                     ))
 
                 model.save(sess, save_path)
-
     #测试
     tf.reset_default_graph()
     model_pred = SequenceToSequence(
@@ -102,15 +101,20 @@ def test(params):
                 np.array(x),
                 np.array(xl)
             )
-            print(ws.inverse_transform(x[0]))
-            print(ws.inverse_transform(y[0]))
-            print(ws.inverse_transform(pred[0]))
+            # print(ws.inverse_transform(x[0]))
+            # print(ws.inverse_transform(y[0]))
+            # print(ws.inverse_transform(pred[0]))
             t += 1
             if t >= 3:
                 break
+    with open('record.txt', 'a+', encoding='utf-8') as f :
+        f.write('epoch {} loss={:.6f} lr={:.6f}'.format(epoch, np.mean(costs), lr) + '\n')
+        
+    print('train done')
+
 def main():
     import json
-    test(json.load(open('E:\VSCode\Code\Python\Chatbot\Chatbot_1\Chatbot_2\params.json')))
+    test(json.load(open('params.json')))
 
 if __name__ == '__main__':
     main()

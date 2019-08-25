@@ -5,26 +5,23 @@ import numpy as np
 import tensorflow as tf
 # sys.path.append('E:/VSCode/Python/Chatbot/Chatbot_1/Chatbot_2')
 
-from sequence_to_sequence import *
-from data_utils import *
+from sequence_to_sequence import SequenceToSequence
+from data_utils import batch_flow
 
-def test(params, infos):
-    # from sequence_to_sequence import SequenceToSequence
-    # from data_utils import batch_flow
+import jieba
 
-    x_data, _ = pickle.load(open('E:/VSCode/Code/Python/Chatbot/Chatbot_1/Chatbot_2/chatbot.pkl', 'rb'))
-    ws = pickle.load(open('E:/VSCode/Code/Python/Chatbot/Chatbot_1/Chatbot_2/ws.pkl', 'rb'))
 
-    # for x in x_data[:5]:
-    #     print(' '.join(x))
+def test(params):
+    x_data, _ = pickle.load(open('data170.pkl', 'rb'))
+    ws = pickle.load(open('ws170.pkl', 'rb'))
 
     config = tf.ConfigProto(
-        device_count = {'CPU':1, 'GPU':0},
+        device_count={'CPU': 1, 'GPU': 0},
         allow_soft_placement=True,
         log_device_placement=False
     )
 
-    save_path = 'E:/VSCode/Code/Python/Chatbot/Chatbot_1/Chatbot_2/model/epoch_400_learn_rate_0.001_depth_4_hidden_units_128/s2ss_chatbot.ckpt'
+    save_path = './model/epoch_800_learn_rate_0.001_depth_4_hidden_units_128_data170/s2ss_chatbot.ckpt'
 
     tf.reset_default_graph()
     model_pred = SequenceToSequence(
@@ -40,47 +37,47 @@ def test(params, infos):
     with tf.Session(config=config) as sess:
         sess.run(init)
         model_pred.load(sess, save_path)
+        with open('data170_question.txt', 'r', encoding='utf-8') as f:
+            with open('result_800_data170.txt', 'w+', encoding='utf-8') as f_r:
+                while True:
+                    # user_text = f.readline()
+                    # user_text = user_text.replace('\n', '')
+                    # print('问: ' + user_text)
+                    # f_r.write('问: ' + user_text + '\n')
+                    user_text = input('问: ')
+                    if user_text in ('exit', 'quit'):
+                        exit(0)
 
-        while True:
-            # user_text = input('请输入您的句子:')
-            # if user_text in ('exit', 'quit'):
-            #     exit(0)
-            x_test = [list(infos.lower())]
-            bar = batch_flow([x_test], ws, 1)
-            x, xl = next(bar)
-            x = np.flip(x, axis=1)
+                    x_test = []
+                    x_test.append(jieba.lcut(user_text))
 
-            print(x, xl)
+                    bar = batch_flow([x_test], ws, 1)
+                    x, xl = next(bar)
+                    x = np.flip(x, axis=1)
 
-            pred = model_pred.predict(
-                sess,
-                np.array(x),
-                np.array(xl)
-            )
-            print(pred)
+                    # print(x, xl)
 
-            print(ws.inverse_transform(x[0]))
+                    pred = model_pred.predict(
+                        sess,
+                        np.array(x),
+                        np.array(xl)
+                    )
+                    # print(pred)
 
-            for p in pred:
-                ans = ws.inverse_transform(p)
-                print(ans)
-                return ans
+                    # print(ws.inverse_transform(x[0]))
 
-# app = Flask(__name__)
+                    ans = ws.inverse_transform(pred[0])
+                    print('答: ' + str(ans) + '\n')
+                    print()
+                    # f_r.write('答: ' + str(ans) + '\n')
+                    # return ans
 
-# @app.route('/api/chatbot', methods=['get'])
-def chatbot(infos):
-    # infos = request.args['infos']
 
+def chatbot():
     import json
-    text = test(json.load(open('E:/VSCode/Code/Python/Chatbot/Chatbot_1/Chatbot_2/params.json')), infos)
-    # return text
-    return "".join(text)
+    text = test(json.load(open('params.json')))
+    return
+
 
 if __name__ == '__main__':
-    # app.debug=True
-    # app.run(host='0.0.0.0', port=8000)
-    while(1):
-        print('input your question: ')
-        infos = input()
-        chatbot(infos)
+    chatbot()

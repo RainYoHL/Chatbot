@@ -1,7 +1,8 @@
 import random
 import numpy as np
 from tensorflow.python.client import device_lib
-from word_sequence import WordSequence
+import word_sequence
+import fake_data
 
 VOCAB_SIZE_THRESHOLD_CPU = 50000
 
@@ -81,7 +82,7 @@ def batch_flow(data, ws, batch_size, raw=False, add_end=True):
                 #添加结束标记（结尾）
                 line = d[j]
                 if add_end[j] and isinstance(line, (tuple, list)):
-                    line = list(line) + [WordSequence.END_TAG]
+                    line = list(line) + [word_sequence.WordSequence.END_TAG]
                 if w is not None:
                     x, xl = transform_sentence(line, w, max_lens[j], add_end[j])
                     batches[j * mul].append(x)
@@ -98,8 +99,10 @@ def batch_flow_bucket(data, ws, batch_size, raw=False, add_end=True,
                       n_bucket=5, bucket_ind=1, debug=False):
     #bucket_ind 是指哪一个维度的输入作为bucket的依据
     #n_bucket就是指把数据分成了多少个bucket
+    # print(data)
     all_data = list(zip(*data))
     lengths = sorted(list(set([len(x[bucket_ind]) for x in all_data])))
+
     if n_bucket > len(lengths):
         n_bucket = len(lengths)
 
@@ -113,6 +116,7 @@ def batch_flow_bucket(data, ws, batch_size, raw=False, add_end=True,
         print(splits)
 
     ind_data = {}
+
     for x in all_data:
         l = len(x[bucket_ind])
         for ind, s in enumerate(splits[:-1]):
@@ -144,6 +148,7 @@ def batch_flow_bucket(data, ws, batch_size, raw=False, add_end=True,
         choice_ind = np.random.choice(inds, p=ind_p)
         if debug:
             print('choice_ind', choice_ind)
+        
         data_batch = random.sample(ind_data[choice_ind], batch_size)
         batches = [[] for i in range(len(data) * mul)]
 
@@ -166,7 +171,7 @@ def batch_flow_bucket(data, ws, batch_size, raw=False, add_end=True,
                 #添加结尾
                 line = d[j]
                 if add_end[j] and isinstance(line, (tuple, list)):
-                    line = list(line) + [WordSequence.END_TAG]
+                    line = list(line) + [word_sequence.WordSequence.END_TAG]
 
                 if w is not None:
                     x, xl = transform_sentence(line, w, max_lens[j], add_end[j])
@@ -182,22 +187,20 @@ def batch_flow_bucket(data, ws, batch_size, raw=False, add_end=True,
         yield batches
 
 def test_batch_flow():
-    from fake_data import generate
-    x_data, y_data, ws_input, ws_target = generate(size=10000)
+    x_data, y_data, ws_input, ws_target = fake_data.generate(size=10000)
     flow = batch_flow([x_data, y_data], [ws_input, ws_target], 4)
     x, xl, y, yl = next(flow)
-    print(x.shape, y.shape, xl.shape, yl.shape)
+    # print(x.shape, y.shape, xl.shape, yl.shape)
 
 def test_batch_flow_bucket():
-    from fake_data import generate
-    x_data, y_data, ws_input, ws_target = generate(size=10000)
-    flow = batch_flow_bucket([x_data, y_data], [ws_input, ws_target], 4, debug=True)
+    x_data, y_data, ws_input, ws_target = fake_data.generate(size=10)
+    flow = batch_flow_bucket([x_data, y_data], [ws_input, ws_target], 1, debug=True)
     for _ in range(10):
         x, xl, y, yl = next(flow)
-        print(x.shape, y.shape, xl.shape, yl.shape)
+        # print(x.shape, y.shape, xl.shape, yl.shape)
 
 if __name__ == '__main__':
     # size = 300000
     # print(_get_embe1d_device(size))
-    test_batch_flow()
-    # test_batch_flow_bucket()
+    # test_batch_flow()
+    test_batch_flow_bucket()

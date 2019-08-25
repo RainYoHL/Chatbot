@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class WordSequence(object):
 
     PAD_TAG = '<pad>'
@@ -13,7 +14,7 @@ class WordSequence(object):
     END = 3
 
     def __init__(self):
-        #初始化基本的字典dict
+        # 初始化基本的字典dict
         self.dict = {
             WordSequence.PAD_TAG: WordSequence.PAD,
             WordSequence.UNK_TAG: WordSequence.UNK,
@@ -43,24 +44,23 @@ class WordSequence(object):
     def __len__(self):
         return self.size()
 
-    def fit(self, sentences, min_count=5, max_count=None, max_features=None):
+    def fit(self, sentences, min_count=1, max_count=None, max_features=None):
 
         assert not self.fited, 'WordSequence 只能fit一次'
         count = {}
-        for sentence in sentences:
-            arr = list(sentence)
-            for a in arr:
-                if a not in count:
-                    count[a] = 0
-                count[a] += 1
+        # print(sentences)
 
+        for sentence in sentences:
+            arr = sentence
+            for word in arr:
+                if word not in count:
+                    count[word] = 0
+                count[word] += 1
         if min_count is not None:
             count = {k: v for k, v in count.items() if v >= min_count}
-            
 
-        if max_count is not None:
-            count = {k: v for k, v in count.items() if v <= max_count}
-            
+        # if max_count is not None:
+        #     count = {k: v for k, v in count.items() if v <= max_count}
 
         self.dict = {
             WordSequence.PAD_TAG: WordSequence.PAD,
@@ -70,12 +70,14 @@ class WordSequence(object):
         }
 
         if isinstance(max_features, int):
-            count = sorted(list(count.items()), key=lambda x:x[1])
-            if max_features is not None and len(count) > max_features:
+            print(1)
+            count = sorted(list(count.items()), key=lambda x: x[1])
+
+            if len(count) > max_features:
                 count = count[-int(max_features):]
             for w, _ in count:
                 self.dict[w] = len(self.dict)
-                
+
         else:
             for w in sorted(count.keys()):
                 self.dict[w] = len(self.dict)
@@ -87,12 +89,12 @@ class WordSequence(object):
 
         if max_len is not None:
             r = [self.PAD] * max_len
-            
+
         else:
             r = [self.PAD] * len(sentence)
 
         for index, a in enumerate(sentence):
-            if max_len is not None and index >= len(r):
+            if index >= len(r):
                 break
             r[index] = self.to_index(a)
         return np.array(r)
@@ -115,18 +117,21 @@ class WordSequence(object):
 
         return ret
 
+
 def test():
 
     ws = WordSequence()
-    ws.fit([
-        ['足', '球', '蓝','球','球'],
-    ])
+    ws.fit((
+        ['足球', '球', '蓝', '球', '球'],
+        ['足', '蓝', '球'],
+    ))
 
     indice = ws.transform(['蓝', '球'])
     print(indice)
 
     back = ws.inverse_transform(indice)
     print(back)
+
 
 if __name__ == '__main__':
     test()
